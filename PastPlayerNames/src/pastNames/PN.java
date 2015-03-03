@@ -25,127 +25,121 @@ import java.util.Iterator;
 
 public class PN implements ActionListener, KeyListener {
 
-	JFrame frame = new JFrame("Past user names");
-	JTabbedPane tabbedPane = new JTabbedPane();
-	JPanel input = new JPanel();
-	JTextPane output = new JTextPane();
+    JFrame frame = new JFrame("Past user names");
+    JTabbedPane tabbedPane = new JTabbedPane();
+    JPanel input = new JPanel();
+    JTextPane output = new JTextPane();
 
-	JTextField textField = new JTextField();
-	JButton goButton = new JButton("Find User");
+    JTextField textField = new JTextField();
+    JButton goButton = new JButton("Find User");
 
-	public static void main(String[] args) {
-		new PN().gui();
-	}
+    public static void main(String[] args) {
+        new PN().gui();
+    }
 
-	public void gui() {
+    public void gui() {
 
-		textField.setPreferredSize(new Dimension(150, 30));
-		frame.add(tabbedPane);
-		tabbedPane.add("Input", input);
-		tabbedPane.add("Output", output);
-		tabbedPane.setTitleAt(0, "Input");
-		tabbedPane.setTitleAt(1, "Output");
-		input.add(textField);
-		input.add(goButton);
-		goButton.addActionListener(this);
-		textField.addKeyListener(this);
-		frame.pack();
-		frame.setVisible(true);
+        textField.setPreferredSize(new Dimension(150, 30));
+        frame.add(tabbedPane);
+        tabbedPane.add("Input", input);
+        tabbedPane.add("Output", output);
+        input.add(textField);
+        input.add(goButton);
+        goButton.addActionListener(this);
+        textField.addKeyListener(this);
+        frame.pack();
+        frame.setVisible(true);
 
-	}
+    }
 
-	public void getInfoOnPlayer() {
+    public void getInfoOnPlayer() {
 
-		String input = textField.getText();
-		try {
-			String webData = getInfoFromMc("https://api.mojang.com/users/profiles/minecraft/"
-					+ input);
-			Gson gson = new Gson();
-			JsonObject uuidData = gson.fromJson(webData, JsonObject.class);
-			String uuid = "";
-			if (uuidData != null) {
-				uuid = uuidData.get("id").getAsString();
-			}
+        String input = textField.getText();
+        try {
+            String webData = getInfoFromMc("https://api.mojang.com/users/profiles/minecraft/" + input);
+            Gson gson = new Gson();
+            JsonObject uuidData = gson.fromJson(webData, JsonObject.class);
+            String uuid = "";
+            if (uuidData != null) {
+                uuid = uuidData.get("id").getAsString();
+            }
 
-			if (!uuid.equals("")) {
+            if (!uuid.equals("")) {
 
-				StringBuilder builder = new StringBuilder();
+                StringBuilder builder = new StringBuilder();
 
-				String namesData = getInfoFromMc("https://api.mojang.com/user/profiles/"
-						+ uuid + "/names");
+                String namesData = getInfoFromMc("https://api.mojang.com/user/profiles/" + uuid + "/names");
 
-				JsonArray pastNames = gson.fromJson(namesData, JsonArray.class);
-				builder.append("Player UUID: " + uuid + " \n");
-				builder.append("Past names of " + input + " Are: \n");
+                JsonArray pastNames = gson.fromJson(namesData, JsonArray.class);
+                builder.append("Player UUID: " + uuid + " \n");
+                builder.append("Past names of " + input + " are: \n");
 
-				int i = 0;
-				Iterator<JsonElement> iterator = pastNames.iterator();
-				while (iterator.hasNext()) {
+                int i = 0;
+                Iterator<JsonElement> iterator = pastNames.iterator();
+                while (iterator.hasNext()) {
 
-					i++;
-					JsonElement element = gson.fromJson(iterator.next(),
-							JsonElement.class);
-					JsonObject nameObj = element.getAsJsonObject();
-					String name = nameObj.get("name").getAsString();
+                    i++;
+                    JsonElement element = gson.fromJson(iterator.next(), JsonElement.class);
+                    JsonObject nameObj = element.getAsJsonObject();
+                    String name = nameObj.get("name").getAsString();
+                    builder.append(i + ". " + name + "\n");
 
-					builder.append(i + ". " + name + "\n");
+                }
+                output.setText(builder.toString());
+                tabbedPane.setSelectedIndex(1);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-				}
-				output.setText(builder.toString());
-				tabbedPane.setSelectedIndex(1);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+    }
 
-	}
+    public String getInfoFromMc(String urlString) throws Exception {
 
-	public String getInfoFromMc(String urlString) throws Exception {
+        BufferedReader reader = null;
 
-		BufferedReader reader = null;
+        try {
+            URL url = new URL(urlString);
+            reader = new BufferedReader(new InputStreamReader(url.openStream()));
+            StringBuilder buffer = new StringBuilder();
+            int read;
+            char[] chars = new char[1024];
+            while ((read = reader.read(chars)) != -1)
+                buffer.append(chars, 0, read);
+            return buffer.toString();
 
-		try {
-			URL url = new URL(urlString);
-			reader = new BufferedReader(new InputStreamReader(url.openStream()));
-			StringBuilder buffer = new StringBuilder();
-			int read;
-			char[] chars = new char[1024];
-			while ((read = reader.read(chars)) != -1)
-				buffer.append(chars, 0, read);
-			return buffer.toString();
+        } finally {
+            if (reader != null)
+                reader.close();
+        }
+    }
 
-		} finally {
-			if (reader != null)
-				reader.close();
-		}
-	}
+    @Override
+    public void actionPerformed(ActionEvent arg0) {
+        JButton buttonPressed = (JButton) arg0.getSource();
 
-	@Override
-	public void actionPerformed(ActionEvent arg0) {
-		JButton buttonPressed = (JButton) arg0.getSource();
+        if (buttonPressed == goButton) {
+            getInfoOnPlayer();
+            frame.pack();
+        }
 
-		if (buttonPressed == goButton) {
-			getInfoOnPlayer();
-			frame.pack();
-		}
+    }
 
-	}
+    @Override
+    public void keyPressed(KeyEvent arg0) {
+        if (arg0.getKeyChar() == KeyEvent.VK_ENTER) {
+            getInfoOnPlayer();
+            frame.pack();
+        }
+    }
 
-	@Override
-	public void keyPressed(KeyEvent arg0) {
-		if (arg0.getKeyChar() == KeyEvent.VK_ENTER) {
-			getInfoOnPlayer();
-			frame.pack();
-		}
-	}
+    @Override
+    public void keyReleased(KeyEvent arg0) {
+        // do not need
+    }
 
-	@Override
-	public void keyReleased(KeyEvent arg0) {
-		// do not need
-	}
-
-	@Override
-	public void keyTyped(KeyEvent arg0) {
-		// do not need
-	}
+    @Override
+    public void keyTyped(KeyEvent arg0) {
+        // do not need
+    }
 }
